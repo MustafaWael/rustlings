@@ -5,7 +5,7 @@
 // You can read more about it at https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 // Execute `rustlings hint try_from_into` or use the `hint` watch subcommand for a hint.
 
-use std::convert::{TryFrom, TryInto};
+use std::{convert::{TryFrom, TryInto}, collections::btree_map::Values};
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -23,8 +23,6 @@ enum IntoColorError {
     IntConversion,
 }
 
-// I AM NOT DONE
-
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
 // You need to create an implementation for a tuple of three integers,
@@ -38,6 +36,23 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
     fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        let (red, green, blue) = tuple;
+
+        let converted_red: Result<u8, _> = red.try_into();
+        let converted_green: Result<u8, _> = green.try_into();
+        let converted_blue: Result<u8, _> = blue.try_into();
+
+        match (converted_red, converted_green, converted_blue) {
+            (Ok(r), Ok(g), Ok(b)) => {
+                let color = Color {
+                    red: r,
+                    green: g,
+                    blue: b,
+                };
+                Ok(color)
+            }
+            _ => Err(IntoColorError::IntConversion),
+        }
     }
 }
 
@@ -45,6 +60,19 @@ impl TryFrom<(i16, i16, i16)> for Color {
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
     fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        let converted: Result<Vec<u8>, _> = arr.iter().map(|&x| x.try_into()).collect();
+
+        match converted {
+            Ok(values) => {
+                let color = Color {
+                    red: values[0],
+                    green: values[1],
+                    blue: values[2],
+                };
+                Ok(color)
+            }
+            Err(_) => Err(IntoColorError::IntConversion),
+        }
     }
 }
 
@@ -52,6 +80,25 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
     fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() != 3 {
+            return Err(IntoColorError::BadLen)
+        }
+
+        let converted: Result<Vec<u8>, _> = slice.iter().map(|&x| x.try_into()).collect();
+
+        match converted {
+            Ok(values) => {
+                let color = Color {
+                    red: values[0],
+                    green: values[1],
+                    blue: values[2],
+                };
+
+                Ok(color)
+            }
+            Err(_) => Err(IntoColorError::IntConversion)
+        }
+
     }
 }
 
